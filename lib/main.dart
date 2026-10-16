@@ -813,124 +813,120 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-
-              child: Image.network(
-                'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900',
-
-                width: double.infinity,
-
-                height: 180,
-
-                fit: BoxFit.cover,
-
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 180,
-
-                  color: Colors.green.shade100,
-
-                  child: const Center(child: Icon(Icons.restaurant, size: 70)),
-                ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 800;
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isDesktop)
+                Row(
+                  children: [
+                    Expanded(child: _heroImage(desktop: true)),
+                    const SizedBox(width: 36),
+                    Expanded(child: _intro(onViewMenu, desktop: true)),
+                  ],
+                )
+              else ...[
+                _heroImage(desktop: false),
+                const SizedBox(height: 20),
+                _intro(onViewMenu),
+              ],
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(child: _infoCard(Icons.fastfood, '${foods.length} Foods', 'Available')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _infoCard(Icons.favorite, '${foods.where((f) => f.isFavorite).length} Favorites', 'Favorite Items')),
+                ],
               ),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              'Campus Cafeteria',
-
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Affordable meals for students and faculty.',
-
-              style: TextStyle(fontSize: 16),
-            ),
-
-            const SizedBox(height: 16),
-
-            SizedBox(
-              width: double.infinity,
-
-              child: ElevatedButton.icon(
-                onPressed: onViewMenu,
-
-                icon: const Icon(Icons.restaurant_menu),
-
-                label: const Text('View Menu'),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _infoCard(
-                    Icons.fastfood,
-
-                    '${foods.length} Foods',
-
-                    'Available',
+              const SizedBox(height: 28),
+              const Text("Today's Special", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              if (featuredFood == null)
+                const Text('No menu items available.')
+              else if (isDesktop)
+                Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: Row(
+                    children: [
+                      Expanded(child: _foodImage(featuredFood, height: 230)),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(featuredFood.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              Text(featuredFood.description),
+                              const SizedBox(height: 16),
+                              Text('\u20B1${featuredFood.price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: _infoCard(
-                    Icons.favorite,
-
-                    '${foods.where((f) => f.isFavorite).length} Favorites',
-
-                    'Favorite Items',
-                  ),
+                )
+              else ...[
+                _foodImage(featuredFood, height: 180),
+                ListTile(
+                  title: Text(featuredFood.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(featuredFood.description),
+                  trailing: Text('\u20B1${featuredFood.price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ],
-            ),
-
-            const SizedBox(height: 28),
-
-            if (featuredFood == null)
-              const Text('No menu items available.')
-            else ...[
-              const Text(
-                "Today's Special",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              _foodImage(featuredFood, height: 180),
-              ListTile(
-                title: Text(
-                  featuredFood.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(featuredFood.description),
-                trailing: Text(
-                  '\u20B1${featuredFood.price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
-          ],
-        ),
+          );
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(isDesktop ? 32 : 16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: content,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
+
+  Widget _heroImage({required bool desktop}) => AspectRatio(
+    aspectRatio: desktop ? 16 / 10 : 16 / 9,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200',
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: Colors.green.shade100,
+          child: const Center(child: Icon(Icons.restaurant, size: 70)),
+        ),
+      ),
+    ),
+  );
+
+  Widget _intro(VoidCallback onViewMenu, {bool desktop = false}) => Column(
+    crossAxisAlignment: desktop ? CrossAxisAlignment.start : CrossAxisAlignment.start,
+    children: [
+      Text('Campus Cafeteria', style: TextStyle(fontSize: desktop ? 38 : 26, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      const Text('Affordable meals for students and faculty.', style: TextStyle(fontSize: 16)),
+      const SizedBox(height: 16),
+      SizedBox(
+        width: desktop ? null : double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: onViewMenu,
+          icon: const Icon(Icons.restaurant_menu),
+          label: const Text('View Menu'),
+        ),
+      ),
+    ],
+  );
 
   Widget _infoCard(IconData icon, String title, String subtitle) {
     return Card(
